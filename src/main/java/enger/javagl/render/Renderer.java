@@ -2,7 +2,11 @@ package enger.javagl.render;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.*;
-import util.ResourceUtils;
+import enger.javagl.Main;
+import enger.javagl.gameplay.Camera;
+import enger.javagl.util.ResourceUtils;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,7 +14,14 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+/**
+ * Class performing rendering.
+ */
+
+@SuppressWarnings("FieldCanBeLocal")
 public class Renderer implements GLEventListener {
+
+    public boolean updateCamera = false;
 
     private int VAO;
     private int VBO;
@@ -22,6 +33,7 @@ public class Renderer implements GLEventListener {
         final GL4 gl = drawable.getGL().getGL4();
 
         gl.glClearColor(0.3f, 0.3f, 0.3f, 1);
+        gl.glEnable(gl.GL_DEPTH_TEST);
 
         //Buffers
         {
@@ -30,10 +42,48 @@ public class Renderer implements GLEventListener {
             VAO = VAOBuffer.get(0);
             gl.glBindVertexArray(VAO);
 
-            float[] vertices = {
-                    +0.0f, +0.5f,
-                    +0.5f, -0.5f,
-                    -0.5f, -0.5f
+            float[] vertices = { // cube
+                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+                    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+                    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+                    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+                    0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+                    0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+                    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
             };
 
             IntBuffer VBOBuffer = Buffers.newDirectIntBuffer(1);
@@ -63,11 +113,60 @@ public class Renderer implements GLEventListener {
             gl.glUseProgram(shaderProgram);
 
             int posAttrib = gl.glGetAttribLocation(shaderProgram, "position");
-            gl.glVertexAttribPointer(posAttrib, 2, gl.GL_FLOAT, false, 0, 0);
+            gl.glVertexAttribPointer(posAttrib, 3, gl.GL_FLOAT, false, 5 * Buffers.SIZEOF_FLOAT, 0);
             gl.glEnableVertexAttribArray(posAttrib);
+
+            int textureAttrib = gl.glGetAttribLocation(shaderProgram, "texPosition");
+            gl.glVertexAttribPointer(textureAttrib, 2, gl.GL_FLOAT, false, 5 * Buffers.SIZEOF_FLOAT, 3 * Buffers.SIZEOF_FLOAT);
+            gl.glEnableVertexAttribArray(textureAttrib);
 
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+        }
+
+        //Textures
+        {
+            int texture;
+            IntBuffer buffer = Buffers.newDirectIntBuffer(1);
+            gl.glGenTextures(1, buffer);
+            texture = buffer.get(0);
+            gl.glBindTexture(gl.GL_TEXTURE_2D, texture);
+
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE);
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE);
+
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
+
+            try {
+                byte[] bytes = ResourceUtils.loadImageResource("./images/block.png");
+                ByteBuffer buffer1 = Buffers.newDirectByteBuffer(bytes);
+                gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1);
+                gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, 16, 16, 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, buffer1);
+            } catch (ClassNotFoundException | IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        //Matrices
+        {
+            FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
+            new Matrix4f().rotate((float) Math.toRadians(-55.0f), new Vector3f(1.0f, 0.0f, 1.0f)).get(modelMatrix);
+
+            FloatBuffer viewMatrix = Buffers.newDirectFloatBuffer(16);
+            new Matrix4f().lookAt(Camera.position, new Vector3f(Camera.position).add(Camera.front), Camera.up).get(viewMatrix);
+
+            FloatBuffer projectionMatrix = Buffers.newDirectFloatBuffer(16);
+            new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) Main.WIDTH / (float) Main.HEIGHT, 0.1f, 100.0f).get(projectionMatrix);
+
+            int modelLocation = gl.glGetUniformLocation(shaderProgram, "model");
+            int viewLocation = gl.glGetUniformLocation(shaderProgram, "view");
+            int projectionLocation = gl.glGetUniformLocation(shaderProgram, "projection");
+
+            gl.glUniformMatrix4fv(modelLocation, 1, false, modelMatrix);
+            gl.glUniformMatrix4fv(viewLocation, 1, false, viewMatrix);
+            gl.glUniformMatrix4fv(projectionLocation, 1, false, projectionMatrix);
         }
     }
 
@@ -98,13 +197,29 @@ public class Renderer implements GLEventListener {
     public void display(GLAutoDrawable drawable) {
         final GL4 gl = drawable.getGL().getGL4();
 
-        gl.glClear(GL.GL_COLOR_BUFFER_BIT);
-        gl.glDrawArrays(gl.GL_POINTS, 0, 3);
+        if (updateCamera) {
+            FloatBuffer viewMatrix = Buffers.newDirectFloatBuffer(16);
+            new Matrix4f().lookAt(Camera.position, new Vector3f(Camera.position).add(Camera.front), Camera.up).get(viewMatrix);
+            int viewLocation = gl.glGetUniformLocation(shaderProgram, "view");
+            gl.glUniformMatrix4fv(viewLocation, 1, false, viewMatrix);
+
+            updateCamera = false;
+        }
+
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT);
+        gl.glClear(gl.GL_DEPTH_BUFFER_BIT);
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 36);
     }
 
     @Override
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
         final GL4 gl = drawable.getGL().getGL4();
+
+        FloatBuffer projectionMatrix = Buffers.newDirectFloatBuffer(16);
+        new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) width / (float) height, 0.1f, 100.0f).get(projectionMatrix);
+        int projectionLocation = gl.glGetUniformLocation(shaderProgram, "projection");
+        gl.glUniformMatrix4fv(projectionLocation, 1, false, projectionMatrix);
+
         gl.glViewport(0, 0, width, height);
     }
 }

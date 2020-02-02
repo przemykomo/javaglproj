@@ -2,6 +2,7 @@ package enger.javagl.render;
 
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLCanvas;
+import enger.javagl.gameplay.InputHandler;
 
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -11,6 +12,8 @@ import java.awt.event.WindowEvent;
  * Wrapper around {@link Frame}. Sets up window and OpenGL canvas.
  */
 public class Window implements Runnable {
+
+    public static final Renderer RENDERER = new Renderer();
 
     private final Frame frame;
     private final GLCanvas canvas;
@@ -35,7 +38,8 @@ public class Window implements Runnable {
             }
         });
 
-        canvas.addGLEventListener(new Renderer());
+        canvas.addGLEventListener(RENDERER);
+        canvas.addKeyListener(new InputHandler());
 
         frame.setVisible(true);
 

@@ -9,6 +9,9 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
 }
 
 dependencies {
@@ -16,4 +19,6 @@ dependencies {
 
     compile ('org.jogamp.jogl:jogl-all-main:2.3.2') { transitive = true }
     compile ('org.jogamp.gluegen:gluegen-rt-main:2.3.2') { transitive = true }
+
+    compile "org.joml:joml:1.9.20"
 }
