@@ -4,6 +4,8 @@
       <w>attrib</w>
       <w>glsl</w>
       <w>shaders</w>
+      <w>tickable</w>
+      <w>tickables</w>
     </words>
   </dictionary>
 </component>

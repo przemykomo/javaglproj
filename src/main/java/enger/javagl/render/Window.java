@@ -7,6 +7,7 @@ import enger.javagl.gameplay.InputHandler;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * Wrapper around {@link Frame}. Sets up window and OpenGL canvas.
@@ -14,6 +15,7 @@ import java.awt.event.WindowEvent;
 public class Window implements Runnable {
 
     public static final Renderer RENDERER = new Renderer();
+    private static final InputHandler INPUT_HANDLER = new InputHandler();
 
     private final Frame frame;
     private final GLCanvas canvas;
@@ -39,9 +41,11 @@ public class Window implements Runnable {
         });
 
         canvas.addGLEventListener(RENDERER);
-        canvas.addKeyListener(new InputHandler());
+        canvas.addKeyListener(INPUT_HANDLER);
+        canvas.addMouseMotionListener(INPUT_HANDLER);
 
         frame.setVisible(true);
+        frame.setCursor(frame.getToolkit().createCustomCursor(new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new Point(), null));
 
         while (running) {
             canvas.repaint();
@@ -56,4 +60,11 @@ public class Window implements Runnable {
         frame.dispose();
     }
 
+    public Point getWindowPos() {
+        return new Point(frame.getX(), frame.getY());
+    }
+
+    public Point getWindowCenter() {
+        return new Point(frame.getWidth() / 2, frame.getHeight() / 2);
+    }
 }

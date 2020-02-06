@@ -152,7 +152,7 @@ public class Renderer implements GLEventListener {
         //Matrices
         {
             FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
-            new Matrix4f().rotate((float) Math.toRadians(-55.0f), new Vector3f(1.0f, 0.0f, 1.0f)).get(modelMatrix);
+            new Matrix4f().rotate((float) Math.toRadians(-55.0f), new Vector3f(1.0f, 0.0f, 1.0f)).translate(0f, -2f ,0f).get(modelMatrix);
 
             FloatBuffer viewMatrix = Buffers.newDirectFloatBuffer(16);
             new Matrix4f().lookAt(Camera.position, new Vector3f(Camera.position).add(Camera.front), Camera.up).get(viewMatrix);
@@ -189,11 +189,6 @@ public class Renderer implements GLEventListener {
     }
 
     @Override
-    public void dispose(GLAutoDrawable drawable) {
-        System.out.println("dispose");
-    }
-
-    @Override
     public void display(GLAutoDrawable drawable) {
         final GL4 gl = drawable.getGL().getGL4();
 
@@ -221,5 +216,15 @@ public class Renderer implements GLEventListener {
         gl.glUniformMatrix4fv(projectionLocation, 1, false, projectionMatrix);
 
         gl.glViewport(0, 0, width, height);
+    }
+
+    @Override
+    public void dispose(GLAutoDrawable drawable) {
+        Main.TICK.terminate();
+        try {
+            Main.threadTick.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
