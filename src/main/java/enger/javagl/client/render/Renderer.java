@@ -24,6 +24,11 @@ import java.nio.IntBuffer;
 public class Renderer implements GLEventListener {
 
     public boolean updateCamera = false;
+    public boolean updateWireframe = false;
+    public boolean updateChunk = true;
+
+    private boolean wireframe = false;
+    private int chunkVertexCount;
 
     private int VAO;
     private int VBO;
@@ -50,6 +55,7 @@ public class Renderer implements GLEventListener {
             VAO = VAOBuffer.get(0);
             gl.glBindVertexArray(VAO);
 
+            /*
             float[] vertices = { // cube
                     // Back face
                     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
@@ -94,14 +100,15 @@ public class Renderer implements GLEventListener {
                     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
                     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f  // top-left
             };
+            */
 
             IntBuffer VBOBuffer = Buffers.newDirectIntBuffer(1);
             gl.glGenBuffers(1, VBOBuffer);
             VBO = VBOBuffer.get(0);
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, VBO);
 
-            FloatBuffer buffer = Buffers.newDirectFloatBuffer(vertices);
-            gl.glBufferData(gl.GL_ARRAY_BUFFER, buffer.limit() * Buffers.SIZEOF_FLOAT, buffer, GL.GL_STATIC_DRAW);
+//            FloatBuffer buffer = Buffers.newDirectFloatBuffer(vertices);
+//            gl.glBufferData(gl.GL_ARRAY_BUFFER, buffer.limit() * Buffers.SIZEOF_FLOAT, buffer, GL.GL_STATIC_DRAW);
         }
 
         //Shaders
@@ -203,6 +210,18 @@ public class Renderer implements GLEventListener {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT);
 
+        if (updateWireframe) {
+                if (wireframe) {
+                    gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL);
+                    wireframe = false;
+                } else {
+                    gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
+                    wireframe = true;
+                }
+
+            updateWireframe = false;
+        }
+
         if (updateCamera) {
             FloatBuffer viewMatrix = Buffers.newDirectFloatBuffer(16);
             new Matrix4f().lookAt(Camera.position, new Vector3f(Camera.position).add(Camera.front), Camera.up).get(viewMatrix);
@@ -212,24 +231,36 @@ public class Renderer implements GLEventListener {
             updateCamera = false;
         }
 
-        //render chunk
-        {
-            FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
-            int modelLocation = gl.glGetUniformLocation(shaderProgram, "model");
-            for (int i = 0; i < Chunk.blocks.length; i++) {
-                for (int j = 0; j < Chunk.blocks.length; j++) {
-                    for (int k = 0; k < Chunk.blocks.length; k++) {
-                        if (Chunk.blocks[i][j][k] == 1) {
-                            new Matrix4f().translate(i, j, k).get(modelMatrix);
+        if (updateChunk) {
+            float[] chunkVertices = Chunk.getVertices();
 
-                            gl.glUniformMatrix4fv(modelLocation, 1, false, modelMatrix);
+            FloatBuffer buffer = Buffers.newDirectFloatBuffer(chunkVertices);
+            gl.glBufferData(gl.GL_ARRAY_BUFFER, buffer.limit() * Buffers.SIZEOF_FLOAT, buffer, GL.GL_DYNAMIC_DRAW);
 
-                            gl.glDrawArrays(gl.GL_TRIANGLES, 0, 36);
-                        }
-                    }
-                }
-            }
+            chunkVertexCount = chunkVertices.length / 5;
+
+            updateChunk = false;
         }
+
+//        //render chunk
+//        {
+//            FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
+//            int modelLocation = gl.glGetUniformLocation(shaderProgram, "model");
+//            for (int i = 0; i < Chunk.blocks.length; i++) {
+//                for (int j = 0; j < Chunk.blocks.length; j++) {
+//                    for (int k = 0; k < Chunk.blocks.length; k++) {
+//                        if (Chunk.blocks[i][j][k] == 1) {
+//                            new Matrix4f().translate(i, j, k).get(modelMatrix);
+//
+//                            gl.glUniformMatrix4fv(modelLocation, 1, false, modelMatrix);
+//
+//                            gl.glDrawArrays(gl.GL_TRIANGLES, 0, 36);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, chunkVertexCount);
     }
 
     @Override

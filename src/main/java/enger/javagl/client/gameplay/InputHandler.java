@@ -42,7 +42,13 @@ public class InputHandler implements KeyListener, MouseMotionListener, Tickable 
 
     @Override
     public void keyPressed(KeyEvent e) {
-        pressedKeys.put(KeyEvent.getKeyText(e.getKeyCode()), true);
+        String keyText = KeyEvent.getKeyText(e.getKeyCode());
+
+        if (keyText.equals("E")) {
+            Window.RENDERER.updateWireframe = true;
+        }
+
+        pressedKeys.put(keyText, true);
     }
 
     @Override
