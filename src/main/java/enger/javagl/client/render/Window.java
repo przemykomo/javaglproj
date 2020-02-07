@@ -1,8 +1,8 @@
-package enger.javagl.render;
+package enger.javagl.client.render;
 
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLCanvas;
-import enger.javagl.gameplay.InputHandler;
+import enger.javagl.client.gameplay.InputHandler;
 
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -45,7 +45,8 @@ public class Window implements Runnable {
         canvas.addMouseMotionListener(INPUT_HANDLER);
 
         frame.setVisible(true);
-        frame.setCursor(frame.getToolkit().createCustomCursor(new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new Point(), null));
+        //Set cursor as invisible
+        frame.setCursor(frame.getToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB), new Point(), null));
 
         while (running) {
             canvas.repaint();

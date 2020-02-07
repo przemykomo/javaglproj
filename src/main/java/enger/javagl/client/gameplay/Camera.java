@@ -1,6 +1,5 @@
-package enger.javagl.gameplay;
+package enger.javagl.client.gameplay;
 
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public class Camera {

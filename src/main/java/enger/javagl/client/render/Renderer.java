@@ -1,9 +1,11 @@
-package enger.javagl.render;
+package enger.javagl.client.render;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.*;
 import enger.javagl.Main;
-import enger.javagl.gameplay.Camera;
+import enger.javagl.client.Client;
+import enger.javagl.client.gameplay.Camera;
+import enger.javagl.client.gameplay.Chunk;
 import enger.javagl.util.ResourceUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -35,6 +37,12 @@ public class Renderer implements GLEventListener {
         gl.glClearColor(0.3f, 0.3f, 0.3f, 1);
         gl.glEnable(gl.GL_DEPTH_TEST);
 
+        //wireframe
+//        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
+
+        gl.glEnable(gl.GL_CULL_FACE);
+        gl.glFrontFace(gl.GL_CW);
+
         //Buffers
         {
             IntBuffer VAOBuffer = Buffers.newDirectIntBuffer(1);
@@ -43,47 +51,48 @@ public class Renderer implements GLEventListener {
             gl.glBindVertexArray(VAO);
 
             float[] vertices = { // cube
-                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-                    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-                    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-                    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-                    0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-                    0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-                    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+                    // Back face
+                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
+                    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
+                    // Front face
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+                    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
+                    // Left face
+                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+                    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+                    // Right face
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+                    0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+                    // Bottom face
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+                    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
+                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+                    // Top face
+                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+                    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f  // top-left
             };
 
             IntBuffer VBOBuffer = Buffers.newDirectIntBuffer(1);
@@ -132,8 +141,8 @@ public class Renderer implements GLEventListener {
             texture = buffer.get(0);
             gl.glBindTexture(gl.GL_TEXTURE_2D, texture);
 
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE);
-            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE);
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT);
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT);
 
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
@@ -152,13 +161,13 @@ public class Renderer implements GLEventListener {
         //Matrices
         {
             FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
-            new Matrix4f().rotate((float) Math.toRadians(-55.0f), new Vector3f(1.0f, 0.0f, 1.0f)).translate(0f, -2f ,0f).get(modelMatrix);
+            new Matrix4f().translate(0f, -2f ,0f).get(modelMatrix);
 
             FloatBuffer viewMatrix = Buffers.newDirectFloatBuffer(16);
             new Matrix4f().lookAt(Camera.position, new Vector3f(Camera.position).add(Camera.front), Camera.up).get(viewMatrix);
 
             FloatBuffer projectionMatrix = Buffers.newDirectFloatBuffer(16);
-            new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) Main.WIDTH / (float) Main.HEIGHT, 0.1f, 100.0f).get(projectionMatrix);
+            new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) Client.WIDTH / (float) Client.HEIGHT, 0.1f, 100.0f).get(projectionMatrix);
 
             int modelLocation = gl.glGetUniformLocation(shaderProgram, "model");
             int viewLocation = gl.glGetUniformLocation(shaderProgram, "view");
@@ -191,6 +200,8 @@ public class Renderer implements GLEventListener {
     @Override
     public void display(GLAutoDrawable drawable) {
         final GL4 gl = drawable.getGL().getGL4();
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT);
+        gl.glClear(gl.GL_DEPTH_BUFFER_BIT);
 
         if (updateCamera) {
             FloatBuffer viewMatrix = Buffers.newDirectFloatBuffer(16);
@@ -201,9 +212,24 @@ public class Renderer implements GLEventListener {
             updateCamera = false;
         }
 
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT);
-        gl.glClear(gl.GL_DEPTH_BUFFER_BIT);
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 36);
+        //render chunk
+        {
+            FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
+            int modelLocation = gl.glGetUniformLocation(shaderProgram, "model");
+            for (int i = 0; i < Chunk.blocks.length; i++) {
+                for (int j = 0; j < Chunk.blocks.length; j++) {
+                    for (int k = 0; k < Chunk.blocks.length; k++) {
+                        if (Chunk.blocks[i][j][k] == 1) {
+                            new Matrix4f().translate(i, j, k).get(modelMatrix);
+
+                            gl.glUniformMatrix4fv(modelLocation, 1, false, modelMatrix);
+
+                            gl.glDrawArrays(gl.GL_TRIANGLES, 0, 36);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -220,9 +246,9 @@ public class Renderer implements GLEventListener {
 
     @Override
     public void dispose(GLAutoDrawable drawable) {
-        Main.TICK.terminate();
+        Client.TICK.terminate();
         try {
-            Main.threadTick.join();
+            Client.threadTick.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
