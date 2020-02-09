@@ -2,10 +2,9 @@ package enger.javagl.client.render;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.*;
-import enger.javagl.Main;
 import enger.javagl.client.Client;
 import enger.javagl.client.gameplay.Camera;
-import enger.javagl.client.gameplay.Chunk;
+import enger.javagl.client.gameplay.RenderChunk;
 import enger.javagl.util.ResourceUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -23,17 +22,32 @@ import java.nio.IntBuffer;
 @SuppressWarnings("FieldCanBeLocal")
 public class Renderer implements GLEventListener {
 
-    public boolean updateCamera = false;
-    public boolean updateWireframe = false;
-    public boolean updateChunk = true;
+    private volatile boolean updateCamera = false;
+    private volatile boolean updateWireframe = false;
+    private volatile boolean updateChunk = false;
 
     private boolean wireframe = false;
-    private int chunkVertexCount;
+    private int chunkVertexCount = 0;
 
     private int VAO;
     private int VBO;
 
     private int shaderProgram;
+
+    /**
+     * Updates camera on next canvas repaint.
+     */
+    public void updateCamera() {
+        updateCamera = true;
+    }
+
+    public void updateWireframe() {
+        updateWireframe = true;
+    }
+
+    public void updateChunk() {
+        updateChunk = true;
+    }
 
     @Override
     public void init(GLAutoDrawable drawable) {
@@ -41,9 +55,6 @@ public class Renderer implements GLEventListener {
 
         gl.glClearColor(0.3f, 0.3f, 0.3f, 1);
         gl.glEnable(gl.GL_DEPTH_TEST);
-
-        //wireframe
-//        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
 
         gl.glEnable(gl.GL_CULL_FACE);
         gl.glFrontFace(gl.GL_CW);
@@ -55,60 +66,10 @@ public class Renderer implements GLEventListener {
             VAO = VAOBuffer.get(0);
             gl.glBindVertexArray(VAO);
 
-            /*
-            float[] vertices = { // cube
-                    // Back face
-                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
-                    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-                    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
-                    // Front face
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-                    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
-                    // Left face
-                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-                    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-                    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-                    // Right face
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-                    0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-                    0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-                    // Bottom face
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-                    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
-                    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-                    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-                    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-                    // Top face
-                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-                    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-                    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-                    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f  // top-left
-            };
-            */
-
             IntBuffer VBOBuffer = Buffers.newDirectIntBuffer(1);
             gl.glGenBuffers(1, VBOBuffer);
             VBO = VBOBuffer.get(0);
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, VBO);
-
-//            FloatBuffer buffer = Buffers.newDirectFloatBuffer(vertices);
-//            gl.glBufferData(gl.GL_ARRAY_BUFFER, buffer.limit() * Buffers.SIZEOF_FLOAT, buffer, GL.GL_STATIC_DRAW);
         }
 
         //Shaders
@@ -168,7 +129,7 @@ public class Renderer implements GLEventListener {
         //Matrices
         {
             FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
-            new Matrix4f().translate(0f, -2f ,0f).get(modelMatrix);
+            new Matrix4f().get(modelMatrix);
 
             FloatBuffer viewMatrix = Buffers.newDirectFloatBuffer(16);
             new Matrix4f().lookAt(Camera.position, new Vector3f(Camera.position).add(Camera.front), Camera.up).get(viewMatrix);
@@ -232,7 +193,7 @@ public class Renderer implements GLEventListener {
         }
 
         if (updateChunk) {
-            float[] chunkVertices = Chunk.getVertices();
+            float[] chunkVertices = RenderChunk.getVertices();
 
             FloatBuffer buffer = Buffers.newDirectFloatBuffer(chunkVertices);
             gl.glBufferData(gl.GL_ARRAY_BUFFER, buffer.limit() * Buffers.SIZEOF_FLOAT, buffer, GL.GL_DYNAMIC_DRAW);
@@ -241,25 +202,6 @@ public class Renderer implements GLEventListener {
 
             updateChunk = false;
         }
-
-//        //render chunk
-//        {
-//            FloatBuffer modelMatrix = Buffers.newDirectFloatBuffer(16);
-//            int modelLocation = gl.glGetUniformLocation(shaderProgram, "model");
-//            for (int i = 0; i < Chunk.blocks.length; i++) {
-//                for (int j = 0; j < Chunk.blocks.length; j++) {
-//                    for (int k = 0; k < Chunk.blocks.length; k++) {
-//                        if (Chunk.blocks[i][j][k] == 1) {
-//                            new Matrix4f().translate(i, j, k).get(modelMatrix);
-//
-//                            gl.glUniformMatrix4fv(modelLocation, 1, false, modelMatrix);
-//
-//                            gl.glDrawArrays(gl.GL_TRIANGLES, 0, 36);
-//                        }
-//                    }
-//                }
-//            }
-//        }
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, chunkVertexCount);
     }
 
@@ -278,6 +220,7 @@ public class Renderer implements GLEventListener {
     @Override
     public void dispose(GLAutoDrawable drawable) {
         Client.TICK.terminate();
+        Client.NETWORK.disconnect();
         try {
             Client.threadTick.join();
         } catch (InterruptedException e) {

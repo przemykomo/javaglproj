@@ -1,4 +1,4 @@
-package enger.javagl.client.gameplay;
+package enger.javagl.util;
 
 public interface Tickable {
     void tick();

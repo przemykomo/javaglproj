@@ -1,4 +1,4 @@
-package enger.javagl.client.gameplay;
+package enger.javagl.util;
 
 import java.util.HashSet;
 import java.util.Set;

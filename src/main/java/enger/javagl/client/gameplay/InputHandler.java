@@ -2,6 +2,8 @@ package enger.javagl.client.gameplay;
 
 import enger.javagl.client.Client;
 import enger.javagl.client.render.Window;
+import enger.javagl.util.Tick;
+import enger.javagl.util.Tickable;
 import org.joml.Vector3f;
 
 import java.awt.*;
@@ -45,7 +47,17 @@ public class InputHandler implements KeyListener, MouseMotionListener, Tickable 
         String keyText = KeyEvent.getKeyText(e.getKeyCode());
 
         if (keyText.equals("E")) {
-            Window.RENDERER.updateWireframe = true;
+            Window.RENDERER.updateWireframe();
+        }
+
+        if (keyText.equals("Q")) {
+            if (RenderChunk.blocks[2][1][2] == RenderChunk.AIR) {
+                RenderChunk.blocks[2][1][2] = RenderChunk.TESTBLOCK;
+            } else {
+                RenderChunk.blocks[2][1][2] = RenderChunk.AIR;
+            }
+
+            Window.RENDERER.updateChunk();
         }
 
         pressedKeys.put(keyText, true);
@@ -60,32 +72,32 @@ public class InputHandler implements KeyListener, MouseMotionListener, Tickable 
     public void tick() {
         if (pressedKeys.get("W")) {
             Camera.position.add(new Vector3f(Camera.front.x, 0, Camera.front.z).normalize().mul(Camera.speed).mul(Client.TICK.getDeltaTime()));
-            Window.RENDERER.updateCamera = true;
+            Window.RENDERER.updateCamera();
         }
 
         if (pressedKeys.get("S")) {
             Camera.position.sub(new Vector3f(Camera.front.x, 0, Camera.front.z).normalize().mul(Camera.speed).mul(Client.TICK.getDeltaTime()));
-            Window.RENDERER.updateCamera = true;
+            Window.RENDERER.updateCamera();
         }
 
         if (pressedKeys.get("A")) {
             Camera.position.sub(new Vector3f(Camera.right).mul(Camera.strafeSpeed).mul(Client.TICK.getDeltaTime()));
-            Window.RENDERER.updateCamera = true;
+            Window.RENDERER.updateCamera();
         }
 
         if (pressedKeys.get("D")) {
             Camera.position.add(new Vector3f(Camera.right).mul(Camera.strafeSpeed).mul(Client.TICK.getDeltaTime()));
-            Window.RENDERER.updateCamera = true;
+            Window.RENDERER.updateCamera();
         }
 
         if (pressedKeys.get("Space")) {
             Camera.position.add(new Vector3f(Camera.up).mul(Camera.speed).mul(Client.TICK.getDeltaTime()));
-            Window.RENDERER.updateCamera = true;
+            Window.RENDERER.updateCamera();
         }
 
         if (pressedKeys.get("Shift")) {
             Camera.position.sub(new Vector3f(Camera.up).mul(Camera.speed).mul(Client.TICK.getDeltaTime()));
-            Window.RENDERER.updateCamera = true;
+            Window.RENDERER.updateCamera();
         }
     }
 
@@ -106,7 +118,7 @@ public class InputHandler implements KeyListener, MouseMotionListener, Tickable 
             Camera.front.rotateY(-x / 1000);
             Camera.front.rotateAxis(-y / 1000, Camera.right.x, Camera.right.y, Camera.right.z);
             Camera.calculateRightVector();
-            Window.RENDERER.updateCamera = true;
+            Window.RENDERER.updateCamera();
 
             robot.mouseMove(windowPos.x + windowCenter.x + 4, windowPos.y + windowCenter.y + 20);
         }
