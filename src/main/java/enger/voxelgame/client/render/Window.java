@@ -1,51 +1,47 @@
-package enger.javagl.client.render;
+package enger.voxelgame.client.render;
 
-import com.jogamp.opengl.*;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
-import enger.javagl.client.Client;
-import enger.javagl.client.gameplay.InputHandler;
+import enger.voxelgame.client.Client;
+import enger.voxelgame.client.InputHandler;
 
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 
-/**
- * Wrapper around {@link Frame}. Sets up window and OpenGL canvas.
- */
 public class Window implements Runnable {
 
-    public static final Renderer RENDERER = new Renderer();
-    private static final InputHandler INPUT_HANDLER = new InputHandler();
+    public final Renderer RENDERER;
+    public final InputHandler INPUT_HANDLER;
 
     private final Frame frame;
     private final GLCanvas canvas;
-    private boolean running = true;
 
     public Window(String title, int width, int height) {
-        GLProfile glp = GLProfile.get(GLProfile.GL4ES3);
-        GLCapabilities caps = new GLCapabilities(glp);
-        canvas = new GLCanvas(caps);
+        RENDERER = new Renderer();
+        INPUT_HANDLER = new InputHandler();
+
+        GLProfile glProfile = GLProfile.get(GLProfile.GL4ES3);
+        GLCapabilities glCapabilities = new GLCapabilities(glProfile);
+
+        canvas = new GLCanvas(glCapabilities);
 
         frame = new Frame(title);
         frame.setSize(width, height);
         frame.add(canvas);
     }
 
+    @SuppressWarnings("BusyWait")
     @Override
     public void run() {
         frame.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent event) {
-                running = false;
+            public void windowClosing(WindowEvent e) {
+                frame.dispose();
 
-                Client.TICK.terminate();
-                Client.NETWORK.disconnect();
-                try {
-                    Client.threadTick.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                Client.getInstance().exit();
             }
         });
 
@@ -54,10 +50,9 @@ public class Window implements Runnable {
         canvas.addMouseMotionListener(INPUT_HANDLER);
 
         frame.setVisible(true);
-        //Set cursor as invisible
         frame.setCursor(frame.getToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB), new Point(), null));
 
-        while (running) {
+        while (frame.isDisplayable()) {
             canvas.repaint();
 
             try {
@@ -66,15 +61,13 @@ public class Window implements Runnable {
                 e.printStackTrace();
             }
         }
-
-        frame.dispose();
     }
 
     public Point getWindowPos() {
         return new Point(frame.getX(), frame.getY());
     }
 
-    public Point getWindowCenter() {
-        return new Point(frame.getWidth() / 2, frame.getHeight() / 2);
+    public Point getWindowSize() {
+        return new Point(frame.getWidth(), frame.getHeight());
     }
 }

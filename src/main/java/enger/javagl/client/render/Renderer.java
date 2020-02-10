@@ -219,12 +219,6 @@ public class Renderer implements GLEventListener {
 
     @Override
     public void dispose(GLAutoDrawable drawable) {
-        Client.TICK.terminate();
-        Client.NETWORK.disconnect();
-        try {
-            Client.threadTick.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
     }
 }

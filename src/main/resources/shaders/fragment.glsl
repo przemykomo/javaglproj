@@ -2,10 +2,10 @@
 
 in vec2 vTexPosition;
 
-out vec4 outColor;
+out vec4 pixelColor;
 
 uniform sampler2D aTexture;
 
 void main() {
-    outColor = texture(aTexture, vTexPosition);
+    pixelColor = texture(aTexture, vTexPosition);
 }

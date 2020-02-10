@@ -53,6 +53,7 @@ public class ClientNetwork implements Runnable {
                     }
                 } catch (EOFException | SocketException ignored) {
                     //there is no string to read or server closed connection
+                    ignored.printStackTrace();
                 }
             }
 

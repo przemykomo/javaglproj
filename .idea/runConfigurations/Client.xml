@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Client" type="Application" factoryName="Application">
-    <option name="MAIN_CLASS_NAME" value="enger.javagl.Main" />
+    <option name="MAIN_CLASS_NAME" value="enger.voxelgame.Main" />
     <module name="javaglproj.main" />
-    <option name="PROGRAM_PARAMETERS" value="client" />
+    <option name="PROGRAM_PARAMETERS" value="client false" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="enger.javagl.Main" />
